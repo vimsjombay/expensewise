@@ -41,6 +41,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               valueListenable: _expenseBox.listenable(),
               builder: (context, Box<Expense> box, _) {
                 final expenses = box.values.toList();
+                // When data changes, reset the touched index to avoid highlighting the wrong slice.
+                if (mounted) {
+                  // FIX: Avoid calling setState during build
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        _touchedIndex = -1;
+                      });
+                    }
+                  });
+                }
                 return TabBarView(
                   children: [
                     _buildSummary(expenses),
@@ -60,8 +71,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final monthlyExpenses = <String, double>{};
     for (var expense in expenses) {
       final month = DateFormat.yMMM().format(expense.date);
-      monthlyExpenses.update(month, (value) => value + expense.amount,
-          ifAbsent: () => expense.amount);
+      monthlyExpenses.update(month, (value) => value + expense.amount, ifAbsent: () => expense.amount);
     }
 
     final barGroups = monthlyExpenses.entries.map((entry) {
@@ -92,22 +102,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Card(
           margin: const EdgeInsets.all(16.0),
           elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Text('Total Expenses for $currentMonth',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Total Expenses for $currentMonth', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8.0),
-                Text('\u20b9${currentMonthTotal.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold)),
+                Text('₹${currentMonthTotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -127,25 +129,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         if (index >= 0 && index < monthlyExpenses.keys.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(monthlyExpenses.keys.toList()[index],
-                                style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(monthlyExpenses.keys.toList()[index], style: Theme.of(context).textTheme.bodySmall),
                           );
                         }
                         return const Text('');
                       },
                     ),
                   ),
-                  leftTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(),
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final month = monthlyExpenses.keys.toList()[group.x.toInt()];
+                      return BarTooltipItem(
+                        '$month\n',
+                        Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: '₹${rod.toY.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -158,30 +175,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildCategoryPieChart(List<Expense> expenses) {
     final categoryExpenses = <String, double>{};
     for (var expense in expenses) {
-      categoryExpenses.update(
-          expense.category, (value) => value + expense.amount,
-          ifAbsent: () => expense.amount);
+      categoryExpenses.update(expense.category, (value) => value + expense.amount, ifAbsent: () => expense.amount);
     }
 
-    final totalExpenses =
-        categoryExpenses.values.fold(0.0, (sum, amount) => sum + amount);
+    final totalExpenses = categoryExpenses.values.fold(0.0, (sum, amount) => sum + amount);
+    final categoryEntries = categoryExpenses.entries.toList();
 
-    int i = 0;
-    final pieChartSections = categoryExpenses.entries.map((entry) {
-      final isTouched = i == _touchedIndex;
+    final pieChartSections = categoryEntries.asMap().entries.map((mapEntry) {
+      final index = mapEntry.key;
+      final entry = mapEntry.value;
+      final isTouched = index == _touchedIndex;
       final fontSize = isTouched ? 18.0 : 14.0;
       final radius = isTouched ? 110.0 : 100.0;
-      final percentage = (entry.value / totalExpenses) * 100;
-      i++;
+      final percentage = totalExpenses == 0 ? 0 : (entry.value / totalExpenses) * 100;
+
       return PieChartSectionData(
         color: _getCategoryColor(entry.key),
         value: entry.value,
         title: '${percentage.toStringAsFixed(1)}%',
         radius: radius,
-        titleStyle: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            color: Colors.white),
+        titleStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold, color: Colors.white),
       );
     }).toList();
 
@@ -192,44 +205,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               'Spending by Category',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           SizedBox(
             height: 300,
             child: PieChart(
               PieChartData(
-                pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                pieTouchData: PieTouchData(touchCallback: (FlTouchEvent event, pieTouchResponse) {
                   setState(() {
-                    if (!event.isInterestedForInteractions ||
-                        pieTouchResponse == null ||
-                        pieTouchResponse.touchedSection == null) {
+                    if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
                       _touchedIndex = -1;
                       return;
                     }
-                    _touchedIndex =
-                        pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
                   });
                 }),
                 sections: pieChartSections,
                 centerSpaceRadius: 40,
                 sectionsSpace: 2,
               ),
-              duration: const Duration(milliseconds: 150), // Optional
-              curve: Curves.linear, // Optional
+              swapAnimationDuration: const Duration(milliseconds: 150),
+              swapAnimationCurve: Curves.linear,
             ),
           ),
           const SizedBox(height: 24),
           Wrap(
             spacing: 16,
             runSpacing: 8,
-            children: categoryExpenses.entries.map((entry) {
-              return _buildLegend(
-                  entry.key, _getCategoryColor(entry.key), entry.value);
+            children: categoryEntries.map((entry) {
+              return _buildLegend(entry.key, _getCategoryColor(entry.key), entry.value);
             }).toList(),
           )
         ],
@@ -247,71 +252,103 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: color,
         ),
         const SizedBox(width: 8),
-        Text('$category: \u20b9${amount.toStringAsFixed(2)}'),
+        Text('$category: ₹${amount.toStringAsFixed(2)}'),
       ],
     );
   }
 
   Widget _buildTrendsChart(List<Expense> expenses) {
-    final dailyExpenses = <int, double>{};
     final now = DateTime.now();
-    final currentMonthExpenses = expenses
-        .where((e) => e.date.month == now.month && e.date.year == now.year)
-        .toList();
+    final currentMonthExpenses = expenses.where((e) => e.date.month == now.month && e.date.year == now.year).toList();
 
-    for (var expense in currentMonthExpenses) {
-      dailyExpenses.update(expense.date.day, (value) => value + expense.amount,
-          ifAbsent: () => expense.amount);
+    if (currentMonthExpenses.isEmpty) {
+      return Center(
+        child: Text(
+          'No trend data for the current month.',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(153),
+              ),
+        ),
+      );
     }
 
-    final spots = dailyExpenses.entries
-        .map((entry) => FlSpot(entry.key.toDouble(), entry.value))
-        .toList();
+    final dailyExpenses = <int, double>{};
+    for (var expense in currentMonthExpenses) {
+      dailyExpenses.update(expense.date.day, (value) => value + expense.amount, ifAbsent: () => expense.amount);
+    }
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: LineChart(
-        LineChartData(
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: Theme.of(context).colorScheme.primary,
-              barWidth: 3,
-              belowBarData: BarAreaData(
-                show: true,
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.3),
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    final spots = List.generate(daysInMonth, (day) {
+      final dayOfMonth = day + 1;
+      final amount = dailyExpenses[dayOfMonth] ?? 0.0;
+      return FlSpot(dayOfMonth.toDouble(), amount);
+    });
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: LineChart(
+          LineChartData(
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                color: Theme.of(context).colorScheme.primary,
+                barWidth: 3,
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Theme.of(context).colorScheme.primary.withAlpha(77),
+                ),
+                dotData: FlDotData(show: false),
               ),
-              dotData: FlDotData(show: false),
+            ],
+            titlesData: FlTitlesData(
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (value, meta) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(value.toInt().toString(), style: Theme.of(context).textTheme.bodySmall),
+                    );
+                  },
+                  reservedSize: 30,
+                  interval: 5,
+                ),
+              ),
+              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
-          ],
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(value.toInt().toString(),
-                        style: Theme.of(context).textTheme.bodySmall),
-                  );
+            gridData: FlGridData(show: false),
+            borderData: FlBorderData(show: false),
+            lineTouchData: LineTouchData(
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((touchedSpot) {
+                    final date = DateTime(now.year, now.month, touchedSpot.x.toInt());
+                    return LineTooltipItem(
+                      '${DateFormat.MMMd().format(date)}\n',
+                      Theme.of(context).textTheme.bodyLarge!.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: '₹${touchedSpot.y.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList();
                 },
               ),
             ),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(),
-          ),
+          duration: const Duration(milliseconds: 250),
         ),
-        duration: const Duration(milliseconds: 250), // Optional
       ),
     );
   }

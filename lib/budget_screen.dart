@@ -23,7 +23,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   Future<void> _setBudget(double amount) async {
     // No need for setState here, ValueListenableBuilder will handle it
-    await _hiveService.saveBudget(amount, _selectedMonth.year, _selectedMonth.month);
+    await _hiveService.saveBudget(
+        amount, _selectedMonth.year, _selectedMonth.month);
   }
 
   void _showSetBudgetDialog(Budget? currentBudget) {
@@ -40,19 +41,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   void _changeMonth(int increment) {
     setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + increment);
+      _selectedMonth =
+          DateTime(_selectedMonth.year, _selectedMonth.month + increment);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     // Generate the key for the currently selected month.
-    final String budgetKey = _getBudgetKey(_selectedMonth.year, _selectedMonth.month);
+    final String budgetKey =
+        _getBudgetKey(_selectedMonth.year, _selectedMonth.month);
 
     // Use a ValueListenableBuilder that listens to a SPECIFIC key in the budget box.
     // This is the most efficient and reliable way to ensure the UI updates.
     return ValueListenableBuilder(
-      valueListenable: _hiveService.getBudgetBox().listenable(keys: [budgetKey]),
+      valueListenable:
+          _hiveService.getBudgetBox().listenable(keys: [budgetKey]),
       builder: (context, Box<Budget> budgetBox, _) {
         final currentBudget = budgetBox.get(budgetKey);
 
@@ -61,7 +65,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
             valueListenable: _hiveService.getExpenseBox().listenable(),
             builder: (context, Box<Expense> expenseBox, _) {
               final totalExpenses = expenseBox.values
-                  .where((e) => e.date.year == _selectedMonth.year && e.date.month == _selectedMonth.month)
+                  .where((e) =>
+                      e.date.year == _selectedMonth.year &&
+                      e.date.month == _selectedMonth.month)
                   .fold(0.0, (sum, item) => sum + item.amount);
 
               final budgetAmount = currentBudget?.amount ?? 0.0;
@@ -87,7 +93,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
                             ),
                             const SizedBox(height: 20),
                             if (hasBudget)
-                              _buildBudgetIndicator(budgetAmount, totalExpenses),
+                              _buildBudgetIndicator(
+                                  budgetAmount, totalExpenses),
                             const SizedBox(height: 30),
                             if (hasBudget) ...[
                               Text(
@@ -99,16 +106,23 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               Text(
                                 'Remaining: '
                                 '₹${remainingAmount.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: remainingAmount >= 0 ? Colors.green.shade600 : Colors.red.shade600,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: remainingAmount >= 0
+                                          ? Colors.green.shade600
+                                          : Colors.red.shade600,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
                               const SizedBox(height: 30),
                             ],
                             ElevatedButton(
-                              onPressed: () => _showSetBudgetDialog(currentBudget),
-                              child: Text(hasBudget ? 'Edit Budget' : 'Set Budget'),
+                              onPressed: () =>
+                                  _showSetBudgetDialog(currentBudget),
+                              child: Text(
+                                  hasBudget ? 'Edit Budget' : 'Set Budget'),
                             ),
                           ],
                         ),
@@ -135,7 +149,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
           child: LinearProgressIndicator(
             value: percentage,
             minHeight: 20,
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor:
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(
               percentage < 0.5
                   ? Colors.green
@@ -150,7 +165,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('₹0.00', style: Theme.of(context).textTheme.bodySmall),
-            Text('₹${budgetAmount.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+            Text('₹${budgetAmount.toStringAsFixed(2)}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.bold)),
           ],
         )
       ],
@@ -199,7 +218,8 @@ class SetBudgetForm extends StatefulWidget {
   final Future<void> Function(double) onSetBudget;
   final double initialAmount;
 
-  const SetBudgetForm({super.key, required this.onSetBudget, required this.initialAmount});
+  const SetBudgetForm(
+      {super.key, required this.onSetBudget, required this.initialAmount});
 
   @override
   State<SetBudgetForm> createState() => _SetBudgetFormState();
@@ -212,8 +232,10 @@ class _SetBudgetFormState extends State<SetBudgetForm> {
   @override
   void initState() {
     super.initState();
-    _amountController =
-        TextEditingController(text: widget.initialAmount > 0 ? widget.initialAmount.toStringAsFixed(2) : '');
+    _amountController = TextEditingController(
+        text: widget.initialAmount > 0
+            ? widget.initialAmount.toStringAsFixed(2)
+            : '');
   }
 
   Future<void> _submit() async {

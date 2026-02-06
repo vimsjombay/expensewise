@@ -75,7 +75,9 @@ class MainScreenState extends State<MainScreen> {
         title: Text(_widgetTitles[_selectedIndex]),
         actions: [
           IconButton(
-            icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            icon: Icon(themeProvider.themeMode == ThemeMode.dark
+                ? Icons.light_mode
+                : Icons.dark_mode),
             onPressed: () => themeProvider.toggleTheme(),
           ),
         ],
@@ -118,7 +120,8 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 
@@ -127,7 +130,8 @@ class ThemeProvider with ChangeNotifier {
     titleLarge: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w500),
     bodyMedium: GoogleFonts.inter(fontSize: 14),
     bodyLarge: GoogleFonts.inter(fontSize: 16),
-    headlineMedium: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold),
+    headlineMedium:
+        GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold),
   );
 
   static final ThemeData _lightTheme = ThemeData(
@@ -140,13 +144,15 @@ class ThemeProvider with ChangeNotifier {
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
-      titleTextStyle: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
+      titleTextStyle:
+          GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
@@ -162,13 +168,15 @@ class ThemeProvider with ChangeNotifier {
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.blue[900],
       foregroundColor: Colors.white,
-      titleTextStyle: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
+      titleTextStyle:
+          GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.blue[700],
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       ),
     ),
