@@ -55,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return TabBarView(
                   children: [
                     _buildSummary(expenses),
-                    _buildCategoryPieChart(expenses),
+                    _buildCategoryView(expenses),
                     _buildTrendsChart(expenses),
                   ],
                 );
@@ -71,7 +71,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final monthlyExpenses = <String, double>{};
     for (var expense in expenses) {
       final month = DateFormat.yMMM().format(expense.date);
-      monthlyExpenses.update(month, (value) => value + expense.amount, ifAbsent: () => expense.amount);
+      monthlyExpenses.update(month, (value) => value + expense.amount,
+          ifAbsent: () => expense.amount);
     }
 
     final barGroups = monthlyExpenses.entries.map((entry) {
@@ -102,14 +103,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Card(
           margin: const EdgeInsets.all(16.0),
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Text('Total Expenses for $currentMonth', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Total Expenses for $currentMonth',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8.0),
-                Text('₹${currentMonthTotal.toStringAsFixed(2)}', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+                Text('₹${currentMonthTotal.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -129,35 +138,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         if (index >= 0 && index < monthlyExpenses.keys.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(monthlyExpenses.keys.toList()[index], style: Theme.of(context).textTheme.bodySmall),
+                            child: Text(monthlyExpenses.keys.toList()[index],
+                                style: Theme.of(context).textTheme.bodySmall),
                           );
                         }
                         return const Text('');
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final month = monthlyExpenses.keys.toList()[group.x.toInt()];
+                      final month =
+                          monthlyExpenses.keys.toList()[group.x.toInt()];
                       return BarTooltipItem(
                         '$month\n',
                         Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                         children: <TextSpan>[
                           TextSpan(
                             text: '₹${rod.toY.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                              color: Colors.white,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(
+                                  color: Colors.white,
+                                ),
                           ),
                         ],
                       );
@@ -172,14 +189,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCategoryPieChart(List<Expense> expenses) {
+  Widget _buildCategoryView(List<Expense> expenses) {
     final categoryExpenses = <String, double>{};
     for (var expense in expenses) {
-      categoryExpenses.update(expense.category, (value) => value + expense.amount, ifAbsent: () => expense.amount);
+      categoryExpenses.update(
+          expense.category, (value) => value + expense.amount,
+          ifAbsent: () => expense.amount);
     }
 
-    final totalExpenses = categoryExpenses.values.fold(0.0, (sum, amount) => sum + amount);
-    final categoryEntries = categoryExpenses.entries.toList();
+    final totalExpenses =
+        categoryExpenses.values.fold(0.0, (sum, amount) => sum + amount);
+    final categoryEntries = categoryExpenses.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     final pieChartSections = categoryEntries.asMap().entries.map((mapEntry) {
       final index = mapEntry.key;
@@ -187,167 +208,216 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final isTouched = index == _touchedIndex;
       final fontSize = isTouched ? 18.0 : 14.0;
       final radius = isTouched ? 110.0 : 100.0;
-      final percentage = totalExpenses == 0 ? 0 : (entry.value / totalExpenses) * 100;
+      final percentage =
+          totalExpenses == 0 ? 0 : (entry.value / totalExpenses) * 100;
 
       return PieChartSectionData(
         color: _getCategoryColor(entry.key),
         value: entry.value,
         title: '${percentage.toStringAsFixed(1)}%',
         radius: radius,
-        titleStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold, color: Colors.white),
+        titleStyle: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.white),
       );
     }).toList();
 
     return SingleChildScrollView(
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Spending by Category',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 300,
+            height: 250,
             child: PieChart(
               PieChartData(
-                pieTouchData: PieTouchData(touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
                   setState(() {
-                    if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
+                    if (!event.isInterestedForInteractions ||
+                        pieTouchResponse == null ||
+                        pieTouchResponse.touchedSection == null) {
                       _touchedIndex = -1;
                       return;
                     }
-                    _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    _touchedIndex =
+                        pieTouchResponse.touchedSection!.touchedSectionIndex;
                   });
                 }),
                 sections: pieChartSections,
                 centerSpaceRadius: 40,
                 sectionsSpace: 2,
               ),
-              swapAnimationDuration: const Duration(milliseconds: 150),
-              swapAnimationCurve: Curves.linear,
             ),
           ),
           const SizedBox(height: 24),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: categoryEntries.map((entry) {
-              return _buildLegend(entry.key, _getCategoryColor(entry.key), entry.value);
-            }).toList(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Expense Breakdown',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: categoryEntries.length,
+            itemBuilder: (context, index) {
+              final entry = categoryEntries[index];
+              final percentage =
+                  totalExpenses == 0 ? 0 : (entry.value / totalExpenses);
+              return Card(
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _getCategoryColor(entry.key),
+                    child: Text('${(percentage * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                  title: Text(entry.key,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  trailing: Text('₹${entry.value.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              );
+            },
           )
         ],
       ),
     );
   }
 
-  Widget _buildLegend(String category, Color color, double amount) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          color: color,
-        ),
-        const SizedBox(width: 8),
-        Text('$category: ₹${amount.toStringAsFixed(2)}'),
-      ],
-    );
-  }
-
   Widget _buildTrendsChart(List<Expense> expenses) {
     final now = DateTime.now();
-    final currentMonthExpenses = expenses.where((e) => e.date.month == now.month && e.date.year == now.year).toList();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
 
-    if (currentMonthExpenses.isEmpty) {
+    final last30DaysExpenses = expenses
+        .where((e) =>
+            e.date.isAfter(thirtyDaysAgo) &&
+            e.date.isBefore(now.add(const Duration(days: 1))))
+        .toList();
+
+    if (last30DaysExpenses.isEmpty) {
       return Center(
         child: Text(
-          'No trend data for the current month.',
+          'No trend data for the last 30 days.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(153),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyLarge
+                    ?.color
+                    ?.withAlpha(153),
               ),
         ),
       );
     }
 
     final dailyExpenses = <int, double>{};
-    for (var expense in currentMonthExpenses) {
-      dailyExpenses.update(expense.date.day, (value) => value + expense.amount, ifAbsent: () => expense.amount);
+    for (var expense in last30DaysExpenses) {
+      final dayKey =
+          DateTime(expense.date.year, expense.date.month, expense.date.day)
+              .millisecondsSinceEpoch;
+      dailyExpenses.update(dayKey, (value) => value + expense.amount,
+          ifAbsent: () => expense.amount);
     }
 
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final spots = List.generate(daysInMonth, (day) {
-      final dayOfMonth = day + 1;
-      final amount = dailyExpenses[dayOfMonth] ?? 0.0;
-      return FlSpot(dayOfMonth.toDouble(), amount);
+    final spots = List.generate(30, (index) {
+      final date = now.subtract(Duration(days: 29 - index));
+      final dayKey =
+          DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
+      final amount = dailyExpenses[dayKey] ?? 0.0;
+      return FlSpot(index.toDouble(), amount);
     });
 
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: LineChart(
-          LineChartData(
-            lineBarsData: [
-              LineChartBarData(
-                spots: spots,
-                isCurved: true,
-                color: Theme.of(context).colorScheme.primary,
-                barWidth: 3,
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: Theme.of(context).colorScheme.primary.withAlpha(77),
+        child: SizedBox(
+          height: 300,
+          child: LineChart(
+            LineChartData(
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: Theme.of(context).colorScheme.primary,
+                  barWidth: 3,
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Theme.of(context).colorScheme.primary.withAlpha(77),
+                  ),
+                  dotData: FlDotData(show: false),
                 ),
-                dotData: FlDotData(show: false),
-              ),
-            ],
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(value.toInt().toString(), style: Theme.of(context).textTheme.bodySmall),
-                    );
-                  },
-                  reservedSize: 30,
-                  interval: 5,
+              ],
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final intValue = value.toInt();
+                      if (intValue % 5 == 0) {
+                        final date =
+                            now.subtract(Duration(days: 29 - intValue));
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(DateFormat.Md().format(date),
+                              style: Theme.of(context).textTheme.bodySmall),
+                        );
+                      }
+                      return const Text('');
+                    },
+                    reservedSize: 30,
+                    interval: 1,
+                  ),
                 ),
+                leftTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            gridData: FlGridData(show: false),
-            borderData: FlBorderData(show: false),
-            lineTouchData: LineTouchData(
-              touchTooltipData: LineTouchTooltipData(
-                getTooltipItems: (touchedSpots) {
-                  return touchedSpots.map((touchedSpot) {
-                    final date = DateTime(now.year, now.month, touchedSpot.x.toInt());
-                    return LineTooltipItem(
-                      '${DateFormat.MMMd().format(date)}\n',
-                      Theme.of(context).textTheme.bodyLarge!.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(
-                          text: '₹${touchedSpot.y.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Colors.white,
+              gridData: FlGridData(show: false),
+              borderData: FlBorderData(show: false),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((touchedSpot) {
+                      final index = touchedSpot.x.toInt();
+                      final date = now.subtract(Duration(days: 29 - index));
+                      return LineTooltipItem(
+                        '${DateFormat.MMMd().format(date)}\n',
+                        Theme.of(context).textTheme.bodyLarge!.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: '₹${touchedSpot.y.toStringAsFixed(2)}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(
+                                  color: Colors.white,
+                                ),
                           ),
-                        ),
-                      ],
-                    );
-                  }).toList();
-                },
+                        ],
+                      );
+                    }).toList();
+                  },
+                ),
               ),
             ),
           ),
-          duration: const Duration(milliseconds: 250),
         ),
       ),
     );

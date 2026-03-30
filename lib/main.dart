@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:myapp/analytics_screen.dart';
-import 'package:myapp/budget_screen.dart';
-import 'package:myapp/dashboard_screen.dart';
-import 'package:myapp/expenses_screen.dart';
+import 'package:myapp/currency_provider.dart';
+import 'package:myapp/main_screen.dart';
 import 'package:myapp/services/hive_service.dart';
 import 'package:provider/provider.dart';
 
@@ -11,8 +9,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveService().init();
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => CurrencyProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -33,83 +34,6 @@ class MyApp extends StatelessWidget {
           home: const MainScreen(),
         );
       },
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => MainScreenState();
-}
-
-class MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
-
-  static const List<Widget> _widgetOptions = <Widget>[
-    ExpensesScreen(),
-    DashboardScreen(),
-    BudgetScreen(),
-    AnalyticsScreen(),
-  ];
-
-  static const List<String> _widgetTitles = <String>[
-    'Expenses',
-    'Dashboard',
-    'Budget',
-    'Analytics',
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_widgetTitles[_selectedIndex]),
-        actions: [
-          IconButton(
-            icon: Icon(themeProvider.themeMode == ThemeMode.dark
-                ? Icons.light_mode
-                : Icons.dark_mode),
-            onPressed: () => themeProvider.toggleTheme(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.money),
-            label: 'Expenses',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Budget',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-      ),
     );
   }
 }

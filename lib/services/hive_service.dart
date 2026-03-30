@@ -79,6 +79,20 @@ class HiveService {
     return getCategoryBox().values.toList();
   }
 
+  Future<void> deleteCategory(String category) async {
+    final box = getCategoryBox();
+    final Map<dynamic, String> map = box.toMap();
+    dynamic keyToDelete;
+    map.forEach((key, value) {
+      if (value == category) {
+        keyToDelete = key;
+      }
+    });
+    if (keyToDelete != null) {
+      await box.delete(keyToDelete);
+    }
+  }
+
   // --- Budget Methods ---
 
   /// Saves or updates the budget for a specific month.
